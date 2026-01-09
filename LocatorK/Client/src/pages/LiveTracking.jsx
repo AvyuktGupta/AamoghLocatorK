@@ -18,7 +18,7 @@ const LiveTracking = () => {
         eta: '15 minutes'
       })
     }
-  }, [vehicles, selectedVehicle])
+  }, [vehicles])
 
   const handleSearch = (e) => {
     e.preventDefault()

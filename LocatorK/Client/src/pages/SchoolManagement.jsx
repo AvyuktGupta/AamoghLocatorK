@@ -69,7 +69,6 @@ const SchoolManagement = () => {
         </div>
         <div className="form-actions">
           <button onClick={handleAdd} className="btn btn-primary">Add</button>
-          <button className="btn btn-secondary">Show All</button>
         </div>
       </div>
 
