@@ -1,41 +1,14 @@
 import React, { useState } from 'react'
+import { useAppContext } from '../context/AppContext'
 import './PageStyles.css'
 
 const ParentManagement = () => {
+  const { schools, vehicles, parents, setParents, getVehiclesBySchool } = useAppContext()
   const [formData, setFormData] = useState({
     name: '',
     mobileNumber: '',
     school: '',
     vehicleNumber: ''
-  })
-
-  const [parents, setParents] = useState([
-    {
-      id: 1,
-      name: 'Ramesh Kumar',
-      mobileNumber: '9876543210',
-      school: 'Greenwood High School',
-      vehicleNumber: 'DL-01-AB-1234'
-    },
-    {
-      id: 2,
-      name: 'Priya Sharma',
-      mobileNumber: '9876543211',
-      school: 'Sunshine Elementary',
-      vehicleNumber: 'DL-02-CD-5678'
-    }
-  ])
-
-  const [schools] = useState([
-    'Greenwood High School',
-    'Sunshine Elementary',
-    'City Public School'
-  ])
-
-  const [vehicles, setVehicles] = useState({
-    'Greenwood High School': ['DL-01-AB-1234', 'DL-01-EF-5678'],
-    'Sunshine Elementary': ['DL-02-CD-5678', 'DL-02-GH-9012'],
-    'City Public School': ['DL-03-IJ-3456']
   })
 
   const [editingId, setEditingId] = useState(null)
@@ -53,7 +26,7 @@ const ParentManagement = () => {
   const handleAdd = () => {
     if (formData.name && formData.mobileNumber && formData.school && formData.vehicleNumber) {
       const newParent = {
-        id: parents.length + 1,
+        id: parents.length > 0 ? Math.max(...parents.map(p => p.id)) + 1 : 1,
         name: formData.name,
         mobileNumber: formData.mobileNumber,
         school: formData.school,
@@ -95,8 +68,8 @@ const ParentManagement = () => {
     })
   }
 
-  const availableVehicles = formData.school ? (vehicles[formData.school] || []) : []
-  const editAvailableVehicles = editData.school ? (vehicles[editData.school] || []) : []
+  const availableVehicles = formData.school ? getVehiclesBySchool(formData.school) : []
+  const editAvailableVehicles = editData.school ? getVehiclesBySchool(editData.school) : []
 
   return (
     <div className="page-container">
@@ -129,8 +102,8 @@ const ParentManagement = () => {
             className="form-input"
           >
             <option value="">Select School</option>
-            {schools.map((school, idx) => (
-              <option key={idx} value={school}>{school}</option>
+            {schools.map((school) => (
+              <option key={school.id} value={school.name}>{school.name}</option>
             ))}
           </select>
           <select
@@ -148,7 +121,7 @@ const ParentManagement = () => {
         </div>
         <div className="form-actions">
           <button onClick={handleAdd} className="btn btn-primary">Add</button>
-          <button onClick={() => console.log('Show All')} className="btn btn-secondary">Show All</button>
+          <button className="btn btn-secondary">Show All</button>
         </div>
       </div>
 
@@ -199,8 +172,8 @@ const ParentManagement = () => {
                       onChange={(e) => handleEditChange('school', e.target.value)}
                       className="inline-edit-input"
                     >
-                      {schools.map((school, idx) => (
-                        <option key={idx} value={school}>{school}</option>
+                      {schools.map((school) => (
+                        <option key={school.id} value={school.name}>{school.name}</option>
                       ))}
                     </select>
                   ) : (

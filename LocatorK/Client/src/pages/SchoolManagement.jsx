@@ -1,12 +1,11 @@
 import React, { useState } from 'react'
+import { useAppContext } from '../context/AppContext'
 import './PageStyles.css'
 
 const SchoolManagement = () => {
+  const { schools, setSchools } = useAppContext()
   const [schoolName, setSchoolName] = useState('')
-  const [schools, setSchools] = useState([
-    { id: 1, name: 'Greenwood High School', address: '123 Main Street, City' },
-    { id: 2, name: 'Sunshine Elementary', address: '456 Oak Avenue, City' }
-  ])
+  const [schoolAddress, setSchoolAddress] = useState('')
   const [editingId, setEditingId] = useState(null)
   const [editName, setEditName] = useState('')
   const [editAddress, setEditAddress] = useState('')
@@ -14,12 +13,13 @@ const SchoolManagement = () => {
   const handleAdd = () => {
     if (schoolName.trim()) {
       const newSchool = {
-        id: schools.length + 1,
+        id: schools.length > 0 ? Math.max(...schools.map(s => s.id)) + 1 : 1,
         name: schoolName,
-        address: 'Address to be added'
+        address: schoolAddress.trim() || 'Address not provided'
       }
       setSchools([...schools, newSchool])
       setSchoolName('')
+      setSchoolAddress('')
     }
   }
 
@@ -51,15 +51,26 @@ const SchoolManagement = () => {
       <h1>School Management</h1>
       
       <div className="form-section">
-        <input
-          type="text"
-          placeholder="Enter School Name"
-          value={schoolName}
-          onChange={(e) => setSchoolName(e.target.value)}
-          className="form-input"
-        />
-        <button onClick={handleAdd} className="btn btn-primary">Add</button>
-        <button onClick={() => console.log('Show All')} className="btn btn-secondary">Show All</button>
+        <div className="form-row">
+          <input
+            type="text"
+            placeholder="Enter School Name"
+            value={schoolName}
+            onChange={(e) => setSchoolName(e.target.value)}
+            className="form-input"
+          />
+          <input
+            type="text"
+            placeholder="Enter School Address"
+            value={schoolAddress}
+            onChange={(e) => setSchoolAddress(e.target.value)}
+            className="form-input"
+          />
+        </div>
+        <div className="form-actions">
+          <button onClick={handleAdd} className="btn btn-primary">Add</button>
+          <button className="btn btn-secondary">Show All</button>
+        </div>
       </div>
 
       <div className="table-container">
@@ -120,4 +131,3 @@ const SchoolManagement = () => {
 }
 
 export default SchoolManagement
-

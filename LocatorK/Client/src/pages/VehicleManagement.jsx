@@ -1,7 +1,9 @@
 import React, { useState } from 'react'
+import { useAppContext } from '../context/AppContext'
 import './PageStyles.css'
 
 const VehicleManagement = () => {
+  const { schools, vehicles, setVehicles } = useAppContext()
   const [formData, setFormData] = useState({
     vehicleNumber: '',
     schoolName: '',
@@ -9,31 +11,6 @@ const VehicleManagement = () => {
     driverName: '',
     driverMobile: ''
   })
-  
-  const [vehicles, setVehicles] = useState([
-    {
-      id: 1,
-      vehicleNumber: 'DL-01-AB-1234',
-      owner: 'John Doe',
-      schoolName: 'Greenwood High School',
-      driverName: 'Rajesh Kumar',
-      driverMobile: '9876543210'
-    },
-    {
-      id: 2,
-      vehicleNumber: 'DL-02-CD-5678',
-      owner: 'Jane Smith',
-      schoolName: 'Sunshine Elementary',
-      driverName: 'Amit Singh',
-      driverMobile: '9876543211'
-    }
-  ])
-
-  const [schools] = useState([
-    'Greenwood High School',
-    'Sunshine Elementary',
-    'City Public School'
-  ])
 
   const [editingId, setEditingId] = useState(null)
   const [editData, setEditData] = useState({})
@@ -48,7 +25,7 @@ const VehicleManagement = () => {
   const handleAdd = () => {
     if (formData.vehicleNumber && formData.schoolName) {
       const newVehicle = {
-        id: vehicles.length + 1,
+        id: vehicles.length > 0 ? Math.max(...vehicles.map(v => v.id)) + 1 : 1,
         vehicleNumber: formData.vehicleNumber,
         owner: formData.ownerName,
         schoolName: formData.schoolName,
@@ -109,8 +86,8 @@ const VehicleManagement = () => {
             className="form-input"
           >
             <option value="">Select School Name</option>
-            {schools.map((school, idx) => (
-              <option key={idx} value={school}>{school}</option>
+            {schools.map((school) => (
+              <option key={school.id} value={school.name}>{school.name}</option>
             ))}
           </select>
         </div>
@@ -144,7 +121,7 @@ const VehicleManagement = () => {
         </div>
         <div className="form-actions">
           <button onClick={handleAdd} className="btn btn-primary">Add</button>
-          <button onClick={() => console.log('Show All')} className="btn btn-secondary">Show All</button>
+          <button className="btn btn-secondary">Show All</button>
         </div>
       </div>
 
@@ -196,8 +173,8 @@ const VehicleManagement = () => {
                       onChange={(e) => handleEditChange('schoolName', e.target.value)}
                       className="inline-edit-input"
                     >
-                      {schools.map((school, idx) => (
-                        <option key={idx} value={school}>{school}</option>
+                      {schools.map((school) => (
+                        <option key={school.id} value={school.name}>{school.name}</option>
                       ))}
                     </select>
                   ) : (

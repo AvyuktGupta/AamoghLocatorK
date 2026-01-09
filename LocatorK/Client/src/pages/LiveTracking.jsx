@@ -1,36 +1,24 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { useAppContext } from '../context/AppContext'
 import './PageStyles.css'
 import './LiveTracking.css'
 
 const LiveTracking = () => {
+  const { vehicles } = useAppContext()
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedVehicle, setSelectedVehicle] = useState({
-    schoolName: 'Greenwood High School',
-    vehicleNumber: 'DL-01-AB-1234',
-    driverName: 'Rajesh Kumar',
-    driverMobile: '9876543210',
-    status: 'Running',
-    eta: '15 minutes'
-  })
+  const [selectedVehicle, setSelectedVehicle] = useState(null)
 
-  const vehicles = [
-    {
-      schoolName: 'Greenwood High School',
-      vehicleNumber: 'DL-01-AB-1234',
-      driverName: 'Rajesh Kumar',
-      driverMobile: '9876543210',
-      status: 'Running',
-      eta: '15 minutes'
-    },
-    {
-      schoolName: 'Sunshine Elementary',
-      vehicleNumber: 'DL-02-CD-5678',
-      driverName: 'Amit Singh',
-      driverMobile: '9876543211',
-      status: 'Stopped',
-      eta: '25 minutes'
+  // Initialize with first vehicle if available
+  useEffect(() => {
+    if (vehicles.length > 0 && !selectedVehicle) {
+      const firstVehicle = vehicles[0]
+      setSelectedVehicle({
+        ...firstVehicle,
+        status: 'Running',
+        eta: '15 minutes'
+      })
     }
-  ]
+  }, [vehicles, selectedVehicle])
 
   const handleSearch = (e) => {
     e.preventDefault()
@@ -39,8 +27,21 @@ const LiveTracking = () => {
       v.schoolName.toLowerCase().includes(searchQuery.toLowerCase())
     )
     if (found) {
-      setSelectedVehicle(found)
+      setSelectedVehicle({
+        ...found,
+        status: found.status || 'Running',
+        eta: found.eta || '15 minutes'
+      })
     }
+  }
+
+  if (!selectedVehicle) {
+    return (
+      <div className="page-container tracking-page">
+        <h1>Live Tracking</h1>
+        <p>No vehicles available for tracking.</p>
+      </div>
+    )
   }
 
   return (
@@ -102,4 +103,3 @@ const LiveTracking = () => {
 }
 
 export default LiveTracking
-
