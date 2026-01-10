@@ -3,23 +3,26 @@ import { useAppContext } from '../context/AppContext'
 import './PageStyles.css'
 
 const SchoolManagement = () => {
-  const { schools, setSchools } = useAppContext()
+  const { schools, addSchool, updateSchool, deleteSchool, loading, error } = useAppContext()
   const [schoolName, setSchoolName] = useState('')
   const [schoolAddress, setSchoolAddress] = useState('')
   const [editingId, setEditingId] = useState(null)
   const [editName, setEditName] = useState('')
   const [editAddress, setEditAddress] = useState('')
+  const [saving, setSaving] = useState(false)
 
-  const handleAdd = () => {
-    if (schoolName.trim()) {
-      const newSchool = {
-        id: schools.length > 0 ? Math.max(...schools.map(s => s.id)) + 1 : 1,
-        name: schoolName,
-        address: schoolAddress.trim() || 'Address not provided'
+  const handleAdd = async () => {
+    if (schoolName.trim() && !saving) {
+      try {
+        setSaving(true)
+        await addSchool(schoolName, schoolAddress)
+        setSchoolName('')
+        setSchoolAddress('')
+      } catch (err) {
+        alert('Error adding school: ' + err.message)
+      } finally {
+        setSaving(false)
       }
-      setSchools([...schools, newSchool])
-      setSchoolName('')
-      setSchoolAddress('')
     }
   }
 
@@ -29,21 +32,65 @@ const SchoolManagement = () => {
     setEditAddress(school.address)
   }
 
-  const handleSaveEdit = () => {
-    setSchools(schools.map(school =>
-      school.id === editingId
-        ? { ...school, name: editName, address: editAddress }
-        : school
-    ))
-    setEditingId(null)
-    setEditName('')
-    setEditAddress('')
+  const handleSaveEdit = async () => {
+    if (!saving) {
+      try {
+        setSaving(true)
+        await updateSchool(editingId, {
+          name: editName,
+          address: editAddress
+        })
+        setEditingId(null)
+        setEditName('')
+        setEditAddress('')
+      } catch (err) {
+        alert('Error updating school: ' + err.message)
+      } finally {
+        setSaving(false)
+      }
+    }
   }
 
   const handleCancelEdit = () => {
     setEditingId(null)
     setEditName('')
     setEditAddress('')
+  }
+
+  const handleDelete = async () => {
+    if (editingId && !saving) {
+      if (window.confirm('Are you sure you want to delete this school?')) {
+        try {
+          setSaving(true)
+          await deleteSchool(editingId)
+          setEditingId(null)
+          setEditName('')
+          setEditAddress('')
+        } catch (err) {
+          alert('Error deleting school: ' + err.message)
+        } finally {
+          setSaving(false)
+        }
+      }
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="page-container">
+        <h1>School Management</h1>
+        <p>Loading...</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="page-container">
+        <h1>School Management</h1>
+        <p style={{ color: 'red' }}>Error: {error}</p>
+      </div>
+    )
   }
 
   return (
@@ -68,7 +115,9 @@ const SchoolManagement = () => {
           />
         </div>
         <div className="form-actions">
-          <button onClick={handleAdd} className="btn btn-primary">Add</button>
+          <button onClick={handleAdd} className="btn btn-primary" disabled={saving}>
+            {saving ? 'Adding...' : 'Add'}
+          </button>
         </div>
       </div>
 
@@ -113,8 +162,13 @@ const SchoolManagement = () => {
                 <td>
                   {editingId === school.id ? (
                     <div className="edit-actions">
-                      <button onClick={handleSaveEdit} className="btn btn-small btn-success">Save</button>
-                      <button onClick={handleCancelEdit} className="btn btn-small btn-cancel">Cancel</button>
+                      <button onClick={handleSaveEdit} className="btn btn-small btn-success" disabled={saving}>
+                        {saving ? 'Saving...' : 'Save'}
+                      </button>
+                      <button onClick={handleCancelEdit} className="btn btn-small btn-cancel" disabled={saving}>Cancel</button>
+                      <button onClick={handleDelete} className="btn btn-small btn-cancel" disabled={saving}>
+                        {saving ? 'Deleting...' : 'Delete'}
+                      </button>
                     </div>
                   ) : (
                     <button onClick={() => handleModify(school)} className="btn btn-small">Modify</button>

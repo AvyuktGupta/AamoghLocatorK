@@ -3,7 +3,7 @@ import { useAppContext } from '../context/AppContext'
 import './PageStyles.css'
 
 const ParentManagement = () => {
-  const { schools, vehicles, parents, setParents, getVehiclesBySchool } = useAppContext()
+  const { schools, vehicles, parents, addParent, updateParent, deleteParent, getVehiclesBySchool, loading, error } = useAppContext()
   const [formData, setFormData] = useState({
     name: '',
     mobileNumber: '',
@@ -13,6 +13,7 @@ const ParentManagement = () => {
 
   const [editingId, setEditingId] = useState(null)
   const [editData, setEditData] = useState({})
+  const [saving, setSaving] = useState(false)
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -23,22 +24,27 @@ const ParentManagement = () => {
     })
   }
 
-  const handleAdd = () => {
-    if (formData.name && formData.mobileNumber && formData.school && formData.vehicleNumber) {
-      const newParent = {
-        id: parents.length > 0 ? Math.max(...parents.map(p => p.id)) + 1 : 1,
-        name: formData.name,
-        mobileNumber: formData.mobileNumber,
-        school: formData.school,
-        vehicleNumber: formData.vehicleNumber
+  const handleAdd = async () => {
+    if (formData.name && formData.mobileNumber && formData.school && formData.vehicleNumber && !saving) {
+      try {
+        setSaving(true)
+        await addParent({
+          name: formData.name,
+          mobileNumber: formData.mobileNumber,
+          school: formData.school,
+          vehicleNumber: formData.vehicleNumber
+        })
+        setFormData({
+          name: '',
+          mobileNumber: '',
+          school: '',
+          vehicleNumber: ''
+        })
+      } catch (err) {
+        alert('Error adding parent: ' + err.message)
+      } finally {
+        setSaving(false)
       }
-      setParents([...parents, newParent])
-      setFormData({
-        name: '',
-        mobileNumber: '',
-        school: '',
-        vehicleNumber: ''
-      })
     }
   }
 
@@ -47,17 +53,46 @@ const ParentManagement = () => {
     setEditData({ ...parent })
   }
 
-  const handleSaveEdit = () => {
-    setParents(parents.map(parent =>
-      parent.id === editingId ? { ...editData, id: editingId } : parent
-    ))
-    setEditingId(null)
-    setEditData({})
+  const handleSaveEdit = async () => {
+    if (!saving) {
+      try {
+        setSaving(true)
+        await updateParent(editingId, {
+          name: editData.name,
+          mobileNumber: editData.mobileNumber,
+          school: editData.school,
+          vehicleNumber: editData.vehicleNumber
+        })
+        setEditingId(null)
+        setEditData({})
+      } catch (err) {
+        alert('Error updating parent: ' + err.message)
+      } finally {
+        setSaving(false)
+      }
+    }
   }
 
   const handleCancelEdit = () => {
     setEditingId(null)
     setEditData({})
+  }
+
+  const handleDelete = async () => {
+    if (editingId && !saving) {
+      if (window.confirm('Are you sure you want to delete this parent/student?')) {
+        try {
+          setSaving(true)
+          await deleteParent(editingId)
+          setEditingId(null)
+          setEditData({})
+        } catch (err) {
+          alert('Error deleting parent: ' + err.message)
+        } finally {
+          setSaving(false)
+        }
+      }
+    }
   }
 
   const handleEditChange = (field, value) => {
@@ -70,6 +105,24 @@ const ParentManagement = () => {
 
   const availableVehicles = formData.school ? getVehiclesBySchool(formData.school) : []
   const editAvailableVehicles = editData.school ? getVehiclesBySchool(editData.school) : []
+
+  if (loading) {
+    return (
+      <div className="page-container">
+        <h1>Parent / Student Assignment</h1>
+        <p>Loading...</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="page-container">
+        <h1>Parent / Student Assignment</h1>
+        <p style={{ color: 'red' }}>Error: {error}</p>
+      </div>
+    )
+  }
 
   return (
     <div className="page-container">
@@ -120,7 +173,9 @@ const ParentManagement = () => {
           </select>
         </div>
         <div className="form-actions">
-          <button onClick={handleAdd} className="btn btn-primary">Add</button>
+          <button onClick={handleAdd} className="btn btn-primary" disabled={saving}>
+            {saving ? 'Adding...' : 'Add'}
+          </button>
         </div>
       </div>
 
@@ -199,8 +254,13 @@ const ParentManagement = () => {
                 <td>
                   {editingId === parent.id ? (
                     <div className="edit-actions">
-                      <button onClick={handleSaveEdit} className="btn btn-small btn-success">Save</button>
-                      <button onClick={handleCancelEdit} className="btn btn-small btn-cancel">Cancel</button>
+                      <button onClick={handleSaveEdit} className="btn btn-small btn-success" disabled={saving}>
+                        {saving ? 'Saving...' : 'Save'}
+                      </button>
+                      <button onClick={handleCancelEdit} className="btn btn-small btn-cancel" disabled={saving}>Cancel</button>
+                      <button onClick={handleDelete} className="btn btn-small btn-cancel" disabled={saving}>
+                        {saving ? 'Deleting...' : 'Delete'}
+                      </button>
                     </div>
                   ) : (
                     <button onClick={() => handleModify(parent)} className="btn btn-small">Modify</button>

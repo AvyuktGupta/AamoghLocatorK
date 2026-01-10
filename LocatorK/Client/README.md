@@ -39,12 +39,41 @@ cd LocatorK/Client
 npm install
 ```
 
-3. Start the development server:
+3. Set up Firebase configuration:
+   - Create a `.env` file in the `Client` directory
+   - Add your Firebase configuration values:
+   ```
+   VITE_FIREBASE_API_KEY=your_api_key_here
+   VITE_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
+   VITE_FIREBASE_PROJECT_ID=your_project_id
+   VITE_FIREBASE_STORAGE_BUCKET=your_project_id.appspot.com
+   VITE_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
+   VITE_FIREBASE_APP_ID=your_app_id
+   ```
+   - Get these values from Firebase Console > Project Settings > General > Your apps > Web app
+
+4. Configure Firestore Security Rules:
+   - Go to Firebase Console > Firestore Database > Rules
+   - Set up appropriate security rules for your collections (Schools, Vehicles, Students, LiveLocations)
+   - For development, you can use:
+   ```javascript
+   rules_version = '2';
+   service cloud.firestore {
+     match /databases/{database}/documents {
+       match /{document=**} {
+         allow read, write: if request.auth != null;
+       }
+     }
+   }
+   ```
+   - For production, implement proper role-based access control
+
+5. Start the development server:
 ```bash
 npm run dev
 ```
 
-The app will be available at `http://localhost:3000`
+The app will be available at `http://localhost:5173` (or the port shown in terminal)
 
 ## Features
 
@@ -69,86 +98,44 @@ The app will be available at `http://localhost:3000`
 - Show vehicle status and ETA
 - Display driver and vehicle information
 
-## Backend Integration Points
+## Firebase Integration
 
-To connect with your backend API, you'll need to modify the following:
+This application connects directly to Firebase Firestore for data storage and real-time updates.
 
-### API Endpoints to Implement:
+### Firebase Collections:
 
-1. **School Management** (`/api/schools`)
-   - `GET /api/schools` - Fetch all schools
-   - `POST /api/schools` - Create new school
-   - `PUT /api/schools/:id` - Update school
-   - `DELETE /api/schools/:id` - Delete school (optional)
+1. **Schools** - Stores school information
+   - Fields: `name`, `address`, `createdAt`
 
-2. **Vehicle Management** (`/api/vehicles`)
-   - `GET /api/vehicles` - Fetch all vehicles
-   - `POST /api/vehicles` - Create new vehicle
-   - `PUT /api/vehicles/:id` - Update vehicle
-   - `GET /api/vehicles?schoolId=:id` - Get vehicles by school
+2. **Vehicles** - Stores vehicle and driver information
+   - Fields: `vehicleNumber`, `schoolId`, `ownerName`, `driverName`, `driverMobile`, `driverId`, `createdAt`
 
-3. **Parent/Student Management** (`/api/parents`)
-   - `GET /api/parents` - Fetch all parents
-   - `POST /api/parents` - Create new parent assignment
-   - `PUT /api/parents/:id` - Update parent assignment
-   - `GET /api/parents?vehicleId=:id` - Get parents by vehicle
+3. **Students** - Stores student/parent assignments
+   - Fields: `name`, `parentMobile1`, `parentMobile2`, `vehicleId`, `schoolId`, `createdAt`
 
-4. **Live Tracking** (`/api/tracking`)
-   - `GET /api/tracking/:vehicleId` - Get real-time location
-   - `GET /api/tracking/search?query=:query` - Search vehicles
-   - WebSocket connection for real-time updates (recommended)
+4. **LiveLocations** - Stores real-time vehicle locations
+   - Fields: `lat`, `lng`, `speed`, `updatedAt`
+   - Document ID is the vehicle ID
 
-### Where to Add API Calls:
+### Real-time Features:
 
-1. **SchoolManagement.jsx**:
-   - Replace `handleAdd()` with API POST call
-   - Replace `handleModify()` with API PUT call
-   - Add `useEffect` to fetch schools on mount
+- All data (schools, vehicles, students) syncs in real-time across all connected clients
+- Live location tracking uses Firestore real-time listeners
+- Changes are automatically reflected in the UI without page refresh
 
-2. **VehicleManagement.jsx**:
-   - Replace `handleAdd()` with API POST call
-   - Replace `handleModify()` with API PUT call
-   - Fetch schools list from API for dropdown
-   - Fetch vehicles on mount
+### Firebase Service Layer:
 
-3. **ParentManagement.jsx**:
-   - Replace `handleAdd()` with API POST call
-   - Replace `handleModify()` with API PUT call
-   - Fetch schools and vehicles from API
-   - Implement vehicle filtering based on school
+The Firebase integration is handled through:
+- `src/config/firebase.js` - Firebase initialization
+- `src/services/firebaseService.js` - All CRUD operations and real-time subscriptions
+- `src/context/AppContext.jsx` - Context provider that manages Firebase data
 
-4. **LiveTracking.jsx**:
-   - Integrate Google Maps API or similar mapping service
-   - Add WebSocket connection for real-time location updates
-   - Replace search functionality with API call
-   - Fetch vehicle location data periodically or via WebSocket
+### Data Structure Mapping:
 
-### Example API Integration Pattern:
-
-```javascript
-// Example: Adding API call to SchoolManagement.jsx
-useEffect(() => {
-  fetch('/api/schools')
-    .then(res => res.json())
-    .then(data => setSchools(data))
-    .catch(err => console.error('Error fetching schools:', err))
-}, [])
-
-const handleAdd = async () => {
-  try {
-    const response = await fetch('/api/schools', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: schoolName })
-    })
-    const newSchool = await response.json()
-    setSchools([...schools, newSchool])
-    setSchoolName('')
-  } catch (error) {
-    console.error('Error adding school:', error)
-  }
-}
-```
+The frontend uses friendly names (e.g., `schoolName`) while Firebase stores IDs. The service layer automatically handles:
+- Converting school names to school IDs when saving
+- Populating school names from IDs when loading
+- Similar mapping for vehicles and students
 
 ## Build for Production
 

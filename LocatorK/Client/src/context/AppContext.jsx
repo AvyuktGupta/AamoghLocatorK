@@ -1,4 +1,21 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
+import {
+  getSchools,
+  addSchool as addSchoolToFirebase,
+  updateSchool as updateSchoolInFirebase,
+  deleteSchool as deleteSchoolFromFirebase,
+  subscribeToSchools,
+  getVehiclesWithSchoolNames,
+  addVehicle as addVehicleToFirebase,
+  updateVehicle as updateVehicleInFirebase,
+  deleteVehicle as deleteVehicleFromFirebase,
+  subscribeToVehicles,
+  getStudentsWithDetails,
+  addStudent as addStudentToFirebase,
+  updateStudent as updateStudentInFirebase,
+  deleteStudent as deleteStudentFromFirebase,
+  subscribeToStudents
+} from '../services/firebaseService'
 
 const AppContext = createContext()
 
@@ -11,75 +28,157 @@ export const useAppContext = () => {
 }
 
 export const AppProvider = ({ children }) => {
-  // Load data from localStorage on mount
-  const loadFromStorage = (key, defaultValue) => {
+  const [schools, setSchools] = useState([])
+  const [vehicles, setVehicles] = useState([])
+  const [parents, setParents] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  // Load initial data and set up real-time listeners
+  useEffect(() => {
+    let unsubscribeSchools = null
+    let unsubscribeVehicles = null
+    let unsubscribeStudents = null
+
+    const initializeData = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+
+        // Load initial data
+        const [schoolsData, vehiclesData, studentsData] = await Promise.all([
+          getSchools(),
+          getVehiclesWithSchoolNames(),
+          getStudentsWithDetails()
+        ])
+
+        setSchools(schoolsData)
+        setVehicles(vehiclesData)
+        setParents(studentsData)
+
+        // Set up real-time listeners
+        unsubscribeSchools = subscribeToSchools((updatedSchools) => {
+          setSchools(updatedSchools)
+        })
+
+        unsubscribeVehicles = subscribeToVehicles((updatedVehicles) => {
+          setVehicles(updatedVehicles)
+        })
+
+        unsubscribeStudents = subscribeToStudents((updatedStudents) => {
+          setParents(updatedStudents)
+        })
+
+        setLoading(false)
+      } catch (err) {
+        console.error('Error initializing data:', err)
+        setError(err.message)
+        setLoading(false)
+      }
+    }
+
+    initializeData()
+
+    // Cleanup listeners on unmount
+    return () => {
+      if (unsubscribeSchools) unsubscribeSchools()
+      if (unsubscribeVehicles) unsubscribeVehicles()
+      if (unsubscribeStudents) unsubscribeStudents()
+    }
+  }, [])
+
+  // School operations
+  const handleAddSchool = async (name, address) => {
     try {
-      const item = localStorage.getItem(key)
-      return item ? JSON.parse(item) : defaultValue
-    } catch {
-      return defaultValue
+      await addSchoolToFirebase(name, address)
+      // Real-time listener will update the state
+    } catch (err) {
+      console.error('Error adding school:', err)
+      throw err
     }
   }
 
-  const [schools, setSchools] = useState(() => 
-    loadFromStorage('schools', [
-      { id: 1, name: 'Greenwood High School', address: '123 Main Street, City' },
-      { id: 2, name: 'Sunshine Elementary', address: '456 Oak Avenue, City' }
-    ])
-  )
+  const handleUpdateSchool = async (schoolId, updatedData) => {
+    try {
+      await updateSchoolInFirebase(schoolId, updatedData)
+      // Real-time listener will update the state
+    } catch (err) {
+      console.error('Error updating school:', err)
+      throw err
+    }
+  }
 
-  const [vehicles, setVehicles] = useState(() =>
-    loadFromStorage('vehicles', [
-      {
-        id: 1,
-        vehicleNumber: 'DL-01-AB-1234',
-        owner: 'John Doe',
-        schoolName: 'Greenwood High School',
-        driverName: 'Rajesh Kumar',
-        driverMobile: '9876543210'
-      },
-      {
-        id: 2,
-        vehicleNumber: 'DL-02-CD-5678',
-        owner: 'Jane Smith',
-        schoolName: 'Sunshine Elementary',
-        driverName: 'Amit Singh',
-        driverMobile: '9876543211'
-      }
-    ])
-  )
+  const handleDeleteSchool = async (schoolId) => {
+    try {
+      await deleteSchoolFromFirebase(schoolId)
+      // Real-time listener will update the state
+    } catch (err) {
+      console.error('Error deleting school:', err)
+      throw err
+    }
+  }
 
-  const [parents, setParents] = useState(() =>
-    loadFromStorage('parents', [
-      {
-        id: 1,
-        name: 'Ramesh Kumar',
-        mobileNumber: '9876543210',
-        school: 'Greenwood High School',
-        vehicleNumber: 'DL-01-AB-1234'
-      },
-      {
-        id: 2,
-        name: 'Priya Sharma',
-        mobileNumber: '9876543211',
-        school: 'Sunshine Elementary',
-        vehicleNumber: 'DL-02-CD-5678'
-      }
-    ])
-  )
+  // Vehicle operations
+  const handleAddVehicle = async (vehicleData) => {
+    try {
+      await addVehicleToFirebase(vehicleData)
+      // Real-time listener will update the state
+    } catch (err) {
+      console.error('Error adding vehicle:', err)
+      throw err
+    }
+  }
 
-  // Save to localStorage whenever data changes
-  useEffect(() => {
-    localStorage.setItem('schools', JSON.stringify(schools))
-  }, [schools])
+  const handleUpdateVehicle = async (vehicleId, updatedData) => {
+    try {
+      await updateVehicleInFirebase(vehicleId, updatedData)
+      // Real-time listener will update the state
+    } catch (err) {
+      console.error('Error updating vehicle:', err)
+      throw err
+    }
+  }
 
-  useEffect(() => {
-    localStorage.setItem('vehicles', JSON.stringify(vehicles))
-  }, [vehicles])
+  const handleDeleteVehicle = async (vehicleId) => {
+    try {
+      await deleteVehicleFromFirebase(vehicleId)
+      // Real-time listener will update the state
+    } catch (err) {
+      console.error('Error deleting vehicle:', err)
+      throw err
+    }
+  }
 
-  useEffect(() => {
-    localStorage.setItem('parents', JSON.stringify(parents))
-  }, [parents])
+  // Parent/Student operations
+  const handleAddParent = async (parentData) => {
+    try {
+      await addStudentToFirebase(parentData)
+      // Real-time listener will update the state
+    } catch (err) {
+      console.error('Error adding parent:', err)
+      throw err
+    }
+  }
+
+  const handleUpdateParent = async (parentId, updatedData) => {
+    try {
+      await updateStudentInFirebase(parentId, updatedData)
+      // Real-time listener will update the state
+    } catch (err) {
+      console.error('Error updating parent:', err)
+      throw err
+    }
+  }
+
+  const handleDeleteParent = async (parentId) => {
+    try {
+      await deleteStudentFromFirebase(parentId)
+      // Real-time listener will update the state
+    } catch (err) {
+      console.error('Error deleting parent:', err)
+      throw err
+    }
+  }
 
   // Get vehicles by school name
   const getVehiclesBySchool = (schoolName) => {
@@ -92,11 +191,23 @@ export const AppProvider = ({ children }) => {
     <AppContext.Provider
       value={{
         schools,
-        setSchools,
         vehicles,
-        setVehicles,
         parents,
-        setParents,
+        loading,
+        error,
+        // School operations
+        addSchool: handleAddSchool,
+        updateSchool: handleUpdateSchool,
+        deleteSchool: handleDeleteSchool,
+        // Vehicle operations
+        addVehicle: handleAddVehicle,
+        updateVehicle: handleUpdateVehicle,
+        deleteVehicle: handleDeleteVehicle,
+        // Parent operations
+        addParent: handleAddParent,
+        updateParent: handleUpdateParent,
+        deleteParent: handleDeleteParent,
+        // Helper functions
         getVehiclesBySchool
       }}
     >

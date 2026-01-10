@@ -3,7 +3,7 @@ import { useAppContext } from '../context/AppContext'
 import './PageStyles.css'
 
 const VehicleManagement = () => {
-  const { schools, vehicles, setVehicles } = useAppContext()
+  const { schools, vehicles, addVehicle, updateVehicle, deleteVehicle, loading, error } = useAppContext()
   const [formData, setFormData] = useState({
     vehicleNumber: '',
     schoolName: '',
@@ -14,6 +14,7 @@ const VehicleManagement = () => {
 
   const [editingId, setEditingId] = useState(null)
   const [editData, setEditData] = useState({})
+  const [saving, setSaving] = useState(false)
 
   const handleInputChange = (e) => {
     setFormData({
@@ -22,24 +23,29 @@ const VehicleManagement = () => {
     })
   }
 
-  const handleAdd = () => {
-    if (formData.vehicleNumber && formData.schoolName) {
-      const newVehicle = {
-        id: vehicles.length > 0 ? Math.max(...vehicles.map(v => v.id)) + 1 : 1,
-        vehicleNumber: formData.vehicleNumber,
-        owner: formData.ownerName,
-        schoolName: formData.schoolName,
-        driverName: formData.driverName,
-        driverMobile: formData.driverMobile
+  const handleAdd = async () => {
+    if (formData.vehicleNumber && formData.schoolName && !saving) {
+      try {
+        setSaving(true)
+        await addVehicle({
+          vehicleNumber: formData.vehicleNumber,
+          ownerName: formData.ownerName,
+          schoolName: formData.schoolName,
+          driverName: formData.driverName,
+          driverMobile: formData.driverMobile
+        })
+        setFormData({
+          vehicleNumber: '',
+          schoolName: '',
+          ownerName: '',
+          driverName: '',
+          driverMobile: ''
+        })
+      } catch (err) {
+        alert('Error adding vehicle: ' + err.message)
+      } finally {
+        setSaving(false)
       }
-      setVehicles([...vehicles, newVehicle])
-      setFormData({
-        vehicleNumber: '',
-        schoolName: '',
-        ownerName: '',
-        driverName: '',
-        driverMobile: ''
-      })
     }
   }
 
@@ -48,12 +54,25 @@ const VehicleManagement = () => {
     setEditData({ ...vehicle })
   }
 
-  const handleSaveEdit = () => {
-    setVehicles(vehicles.map(vehicle =>
-      vehicle.id === editingId ? { ...editData, id: editingId } : vehicle
-    ))
-    setEditingId(null)
-    setEditData({})
+  const handleSaveEdit = async () => {
+    if (!saving) {
+      try {
+        setSaving(true)
+        await updateVehicle(editingId, {
+          vehicleNumber: editData.vehicleNumber,
+          ownerName: editData.owner,
+          schoolName: editData.schoolName,
+          driverName: editData.driverName,
+          driverMobile: editData.driverMobile
+        })
+        setEditingId(null)
+        setEditData({})
+      } catch (err) {
+        alert('Error updating vehicle: ' + err.message)
+      } finally {
+        setSaving(false)
+      }
+    }
   }
 
   const handleCancelEdit = () => {
@@ -61,8 +80,43 @@ const VehicleManagement = () => {
     setEditData({})
   }
 
+  const handleDelete = async () => {
+    if (editingId && !saving) {
+      if (window.confirm('Are you sure you want to delete this vehicle?')) {
+        try {
+          setSaving(true)
+          await deleteVehicle(editingId)
+          setEditingId(null)
+          setEditData({})
+        } catch (err) {
+          alert('Error deleting vehicle: ' + err.message)
+        } finally {
+          setSaving(false)
+        }
+      }
+    }
+  }
+
   const handleEditChange = (field, value) => {
     setEditData({ ...editData, [field]: value })
+  }
+
+  if (loading) {
+    return (
+      <div className="page-container">
+        <h1>Vehicle Management</h1>
+        <p>Loading...</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="page-container">
+        <h1>Vehicle Management</h1>
+        <p style={{ color: 'red' }}>Error: {error}</p>
+      </div>
+    )
   }
 
   return (
@@ -120,7 +174,9 @@ const VehicleManagement = () => {
           />
         </div>
         <div className="form-actions">
-          <button onClick={handleAdd} className="btn btn-primary">Add</button>
+          <button onClick={handleAdd} className="btn btn-primary" disabled={saving}>
+            {saving ? 'Adding...' : 'Add'}
+          </button>
         </div>
       </div>
 
@@ -157,12 +213,12 @@ const VehicleManagement = () => {
                   {editingId === vehicle.id ? (
                     <input
                       type="text"
-                      value={editData.owner || ''}
+                      value={editData.ownerName || editData.owner || ''}
                       onChange={(e) => handleEditChange('owner', e.target.value)}
                       className="inline-edit-input"
                     />
                   ) : (
-                    vehicle.owner
+                    vehicle.ownerName || vehicle.owner || ''
                   )}
                 </td>
                 <td>
@@ -207,8 +263,13 @@ const VehicleManagement = () => {
                 <td>
                   {editingId === vehicle.id ? (
                     <div className="edit-actions">
-                      <button onClick={handleSaveEdit} className="btn btn-small btn-success">Save</button>
-                      <button onClick={handleCancelEdit} className="btn btn-small btn-cancel">Cancel</button>
+                      <button onClick={handleSaveEdit} className="btn btn-small btn-success" disabled={saving}>
+                        {saving ? 'Saving...' : 'Save'}
+                      </button>
+                      <button onClick={handleCancelEdit} className="btn btn-small btn-cancel" disabled={saving}>Cancel</button>
+                      <button onClick={handleDelete} className="btn btn-small btn-cancel" disabled={saving}>
+                        {saving ? 'Deleting...' : 'Delete'}
+                      </button>
                     </div>
                   ) : (
                     <button onClick={() => handleModify(vehicle)} className="btn btn-small">Modify</button>

@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react'
 import { useAppContext } from '../context/AppContext'
+import { subscribeToLiveLocation, getLiveLocation } from '../services/firebaseService'
 import './PageStyles.css'
 import './LiveTracking.css'
 
 const LiveTracking = () => {
-  const { vehicles } = useAppContext()
+  const { vehicles, loading } = useAppContext()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedVehicle, setSelectedVehicle] = useState(null)
+  const [liveLocation, setLiveLocation] = useState(null)
+  const [locationError, setLocationError] = useState(null)
 
   // Initialize with first vehicle if available
   useEffect(() => {
@@ -20,6 +23,49 @@ const LiveTracking = () => {
     }
   }, [vehicles])
 
+  // Subscribe to live location updates when vehicle is selected
+  useEffect(() => {
+    if (!selectedVehicle?.id) return
+
+    let unsubscribe = null
+
+    const setupLocationListener = async () => {
+      try {
+        setLocationError(null)
+        
+        // Get initial location
+        const initialLocation = await getLiveLocation(selectedVehicle.id)
+        if (initialLocation) {
+          setLiveLocation(initialLocation)
+        }
+
+        // Subscribe to real-time updates
+        unsubscribe = subscribeToLiveLocation(selectedVehicle.id, (location) => {
+          if (location) {
+            setLiveLocation(location)
+            setLocationError(null)
+          } else {
+            setLocationError('No location data available for this vehicle')
+          }
+        })
+      } catch (error) {
+        console.error('Error setting up location listener:', error)
+        setLocationError('Error loading location data')
+      }
+    }
+
+    setupLocationListener()
+
+    // Cleanup listener on unmount or vehicle change
+    return () => {
+      if (unsubscribe) {
+        unsubscribe()
+      }
+      setLiveLocation(null)
+      setLocationError(null)
+    }
+  }, [selectedVehicle?.id])
+
   const handleSearch = (e) => {
     e.preventDefault()
     const found = vehicles.find(v =>
@@ -29,10 +75,22 @@ const LiveTracking = () => {
     if (found) {
       setSelectedVehicle({
         ...found,
-        status: found.status || 'Running',
-        eta: found.eta || '15 minutes'
+        status: 'Running',
+        eta: '15 minutes'
       })
+      setSearchQuery('')
+    } else {
+      alert('Vehicle not found')
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="page-container tracking-page">
+        <h1>Live Tracking</h1>
+        <p>Loading...</p>
+      </div>
+    )
   }
 
   if (!selectedVehicle) {
@@ -66,7 +124,23 @@ const LiveTracking = () => {
           <div className="map-container">
             <div className="map-placeholder">
               <p>Google Maps Integration</p>
-              <p className="map-marker">📍 Vehicle Location</p>
+              {liveLocation ? (
+                <>
+                  <p className="map-marker">📍 Vehicle Location</p>
+                  <p>Latitude: {liveLocation.lat?.toFixed(6)}</p>
+                  <p>Longitude: {liveLocation.lng?.toFixed(6)}</p>
+                  {liveLocation.speed !== undefined && (
+                    <p>Speed: {liveLocation.speed} km/h</p>
+                  )}
+                  {liveLocation.updatedAt && (
+                    <p>Last Updated: {new Date(liveLocation.updatedAt.toDate?.() || liveLocation.updatedAt).toLocaleString()}</p>
+                  )}
+                </>
+              ) : locationError ? (
+                <p style={{ color: 'red' }}>{locationError}</p>
+              ) : (
+                <p>Loading location data...</p>
+              )}
               <p className="eta-display">ETA: {selectedVehicle.eta}</p>
             </div>
           </div>
