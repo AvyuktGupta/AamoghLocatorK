@@ -6,6 +6,7 @@ const ParentManagement = () => {
   const { schools, vehicles, parents, addParent, updateParent, deleteParent, getVehiclesBySchool, loading, error } = useAppContext()
   const [formData, setFormData] = useState({
     name: '',
+    parentName: '',
     mobileNumber: '',
     school: '',
     vehicleNumber: ''
@@ -30,12 +31,14 @@ const ParentManagement = () => {
         setSaving(true)
         await addParent({
           name: formData.name,
+          parentName: formData.parentName,
           mobileNumber: formData.mobileNumber,
           school: formData.school,
           vehicleNumber: formData.vehicleNumber
         })
         setFormData({
           name: '',
+          parentName: '',
           mobileNumber: '',
           school: '',
           vehicleNumber: ''
@@ -59,6 +62,7 @@ const ParentManagement = () => {
         setSaving(true)
         await updateParent(editingId, {
           name: editData.name,
+          parentName: editData.parentName,
           mobileNumber: editData.mobileNumber,
           school: editData.school,
           vehicleNumber: editData.vehicleNumber
@@ -133,11 +137,21 @@ const ParentManagement = () => {
           <input
             type="text"
             name="name"
-            placeholder="Name"
+            placeholder="Student Name"
             value={formData.name}
             onChange={handleInputChange}
             className="form-input"
           />
+          <input
+            type="text"
+            name="parentName"
+            placeholder="Parent Name"
+            value={formData.parentName}
+            onChange={handleInputChange}
+            className="form-input"
+          />
+        </div>
+        <div className="form-row">
           <input
             type="text"
             name="mobileNumber"
@@ -184,7 +198,8 @@ const ParentManagement = () => {
           <thead>
             <tr>
               <th>Parent ID</th>
-              <th>Name</th>
+              <th>Student Name</th>
+              <th>Parent Name</th>
               <th>Mobile Number</th>
               <th>School</th>
               <th>Vehicle Number</th>
@@ -205,6 +220,18 @@ const ParentManagement = () => {
                     />
                   ) : (
                     parent.name
+                  )}
+                </td>
+                <td>
+                  {editingId === parent.id ? (
+                    <input
+                      type="text"
+                      value={editData.parentName || ''}
+                      onChange={(e) => handleEditChange('parentName', e.target.value)}
+                      className="inline-edit-input"
+                    />
+                  ) : (
+                    parent.parentName || ''
                   )}
                 </td>
                 <td>

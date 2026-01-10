@@ -358,7 +358,8 @@ export const getStudentsWithDetails = async () => {
         ...student,
         school: school?.name || '',
         vehicleNumber: vehicle?.vehicleNumber || '',
-        mobileNumber: student.parentMobile1 || ''
+        mobileNumber: student.parentMobile1 || '',
+        parentName: student.parentName || ''
       }
     })
   } catch (error) {
@@ -396,6 +397,7 @@ export const addStudent = async (studentData) => {
     const studentsRef = collection(db, COLLECTIONS.STUDENTS)
     const docRef = await addDoc(studentsRef, {
       name: studentData.name.trim(),
+      parentName: studentData.parentName?.trim() || '',
       parentMobile1: studentData.mobileNumber.trim(),
       parentMobile2: '',
       schoolId: schoolId || '',
@@ -439,6 +441,9 @@ export const updateStudent = async (studentId, updatedData) => {
     // Handle other fields
     if (updatedData.name !== undefined) {
       updateFields.name = updatedData.name.trim()
+    }
+    if (updatedData.parentName !== undefined) {
+      updateFields.parentName = updatedData.parentName.trim()
     }
     if (updatedData.mobileNumber !== undefined) {
       updateFields.parentMobile1 = updatedData.mobileNumber.trim()
@@ -493,7 +498,8 @@ export const subscribeToStudents = (callback) => {
         ...student,
         school: school?.name || '',
         vehicleNumber: vehicle?.vehicleNumber || '',
-        mobileNumber: student.parentMobile1 || ''
+        mobileNumber: student.parentMobile1 || '',
+        parentName: student.parentName || ''
       }
     })
     
