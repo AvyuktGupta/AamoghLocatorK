@@ -4,6 +4,7 @@
  * Firestore Structure:
  * Students/{studentId}
  *   - name: string
+ *   - parentName: string
  *   - parentMobile1: string
  *   - parentMobile2: string
  *   - vehicleId: string
@@ -17,6 +18,7 @@ import { db, COLLECTIONS, getTimestamp, docToObject, handleFirestoreError } from
  * Add a new student to Firestore
  * @param {Object} studentData - Student data object
  * @param {string} studentData.name - Student's name
+ * @param {string} studentData.parentName - Parent's name (optional)
  * @param {string} studentData.parentMobile1 - Primary parent's mobile number
  * @param {string} studentData.parentMobile2 - Secondary parent's mobile number (optional)
  * @param {string} studentData.vehicleId - ID of the assigned vehicle (optional)
@@ -31,6 +33,7 @@ export const addStudent = async (studentData) => {
 
     const studentDoc = {
       name: studentData.name.trim(),
+      parentName: studentData.parentName?.trim() || '',
       parentMobile1: studentData.parentMobile1.trim(),
       parentMobile2: studentData.parentMobile2?.trim() || '',
       vehicleId: studentData.vehicleId || '',
@@ -80,7 +83,7 @@ export const updateStudent = async (studentId, updatedData) => {
 
     // Prepare update object - only include valid fields
     const updateFields = {}
-    const allowedFields = ['name', 'parentMobile1', 'parentMobile2', 'vehicleId', 'schoolId']
+    const allowedFields = ['name', 'parentName', 'parentMobile1', 'parentMobile2', 'vehicleId', 'schoolId']
     
     allowedFields.forEach(field => {
       if (updatedData[field] !== undefined) {

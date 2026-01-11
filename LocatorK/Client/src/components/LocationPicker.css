@@ -1,0 +1,158 @@
+.location-picker-container {
+  width: 100%;
+  margin: 20px 0;
+}
+
+.location-picker-label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: #333;
+  font-size: 14px;
+}
+
+.location-picker-controls {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+.search-container {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+  min-width: 250px;
+}
+
+.location-search-input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.3s;
+}
+
+.location-search-input:focus {
+  border-color: #4CAF50;
+}
+
+.location-search-btn,
+.location-current-btn {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  white-space: nowrap;
+}
+
+.location-search-btn {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.location-search-btn:hover:not(:disabled) {
+  background-color: #45a049;
+}
+
+.location-search-btn:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.location-current-btn {
+  background-color: #2196F3;
+  color: white;
+}
+
+.location-current-btn:hover {
+  background-color: #0b7dda;
+}
+
+.location-address,
+.location-coordinates {
+  margin: 10px 0;
+  padding: 8px 12px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #555;
+}
+
+.location-coordinates {
+  font-family: 'Courier New', monospace;
+}
+
+.location-map-container {
+  width: 100%;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 15px 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.location-instructions {
+  margin-top: 10px;
+  padding: 8px 12px;
+  background-color: #e3f2fd;
+  border-left: 4px solid #2196F3;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #555;
+}
+
+/* Google Maps InfoWindow customization */
+.gm-style .gm-style-iw-c {
+  border-radius: 8px;
+  padding: 0;
+}
+
+.gm-style .gm-style-iw-d {
+  padding: 12px;
+  font-size: 13px;
+}
+
+/* Hide Google Maps error popup */
+div[style*="position: fixed"][style*="z-index"]:has-text("This page can't load Google Maps correctly"),
+div[style*="position: fixed"][style*="z-index"]:has-text("can't load Google Maps"),
+.gm-err-container,
+.gm-err-message,
+div[role="dialog"][aria-label*="Google"],
+div[role="dialog"][aria-label*="can't load"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Hide Google error overlay */
+body > div[style*="position: fixed"][style*="z-index"]:last-child,
+iframe[src*="accounts.google.com"],
+iframe[src*="consent.google.com"] {
+  display: none !important;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .location-picker-controls {
+    flex-direction: column;
+  }
+  
+  .search-container {
+    width: 100%;
+  }
+  
+  .location-current-btn {
+    width: 100%;
+  }
+  
+  .location-map-container {
+    height: 300px !important;
+  }
+}
+

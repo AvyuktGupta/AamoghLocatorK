@@ -34,7 +34,8 @@ export const COLLECTIONS = {
   VEHICLES: 'Vehicles',
   DRIVERS: 'Drivers',
   STUDENTS: 'Students',
-  LIVE_LOCATIONS: 'LiveLocations'
+  VENDOR: 'Vendor',
+  LIVE_LOCATIONS: 'live_locations'
 }
 
 export default app

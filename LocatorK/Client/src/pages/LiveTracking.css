@@ -151,6 +151,26 @@
   color: white;
 }
 
+/* Hide Google Maps error popup */
+div[style*="position: fixed"][style*="z-index"]:has-text("This page can't load Google Maps correctly"),
+div[style*="position: fixed"][style*="z-index"]:has-text("can't load Google Maps"),
+.gm-err-container,
+.gm-err-message,
+div[role="dialog"][aria-label*="Google"],
+div[role="dialog"][aria-label*="can't load"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Hide Google error overlay */
+body > div[style*="position: fixed"][style*="z-index"]:last-child,
+iframe[src*="accounts.google.com"],
+iframe[src*="consent.google.com"] {
+  display: none !important;
+}
+
 @media (max-width: 1200px) {
   .tracking-container {
     flex-direction: column;

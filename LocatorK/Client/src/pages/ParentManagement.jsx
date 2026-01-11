@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useAppContext } from '../context/AppContext'
+import LocationPicker from '../components/LocationPicker'
 import './PageStyles.css'
 
 const ParentManagement = () => {
@@ -8,8 +9,12 @@ const ParentManagement = () => {
     name: '',
     parentName: '',
     mobileNumber: '',
+    mobileNumber2: '',
     school: '',
-    vehicleNumber: ''
+    vehicleNumber: '',
+    pickUpLat: '',
+    pickUpLng: '',
+    shiftID: ''
   })
 
   const [editingId, setEditingId] = useState(null)
@@ -32,16 +37,24 @@ const ParentManagement = () => {
         await addParent({
           name: formData.name,
           parentName: formData.parentName,
-          mobileNumber: formData.mobileNumber,
+          parentMobile1: formData.mobileNumber,
+          parentMobile2: formData.mobileNumber2,
           school: formData.school,
-          vehicleNumber: formData.vehicleNumber
+          vehicleNumber: formData.vehicleNumber,
+          pickUpLat: formData.pickUpLat ? parseFloat(formData.pickUpLat) : null,
+          pickUpLng: formData.pickUpLng ? parseFloat(formData.pickUpLng) : null,
+          shiftID: formData.shiftID
         })
         setFormData({
           name: '',
           parentName: '',
           mobileNumber: '',
+          mobileNumber2: '',
           school: '',
-          vehicleNumber: ''
+          vehicleNumber: '',
+          pickUpLat: '',
+          pickUpLng: '',
+          shiftID: ''
         })
       } catch (err) {
         alert('Error adding parent: ' + err.message)
@@ -63,9 +76,13 @@ const ParentManagement = () => {
         await updateParent(editingId, {
           name: editData.name,
           parentName: editData.parentName,
-          mobileNumber: editData.mobileNumber,
+          parentMobile1: editData.parentMobile1 || editData.mobileNumber,
+          parentMobile2: editData.parentMobile2 || editData.mobileNumber2 || '',
           school: editData.school,
-          vehicleNumber: editData.vehicleNumber
+          vehicleNumber: editData.vehicleNumber,
+          pickUpLat: editData.pickUpLat ? parseFloat(editData.pickUpLat) : null,
+          pickUpLng: editData.pickUpLng ? parseFloat(editData.pickUpLng) : null,
+          shiftID: editData.shiftID || ''
         })
         setEditingId(null)
         setEditData({})
@@ -155,8 +172,39 @@ const ParentManagement = () => {
           <input
             type="text"
             name="mobileNumber"
-            placeholder="Mobile Number"
+            placeholder="Parent Mobile 1"
             value={formData.mobileNumber}
+            onChange={handleInputChange}
+            className="form-input"
+          />
+          <input
+            type="text"
+            name="mobileNumber2"
+            placeholder="Parent Mobile 2 (Optional)"
+            value={formData.mobileNumber2}
+            onChange={handleInputChange}
+            className="form-input"
+          />
+        </div>
+        <LocationPicker
+          initialLat={formData.pickUpLat || null}
+          initialLng={formData.pickUpLng || null}
+          onLocationChange={(lat, lng) => {
+            setFormData({
+              ...formData,
+              pickUpLat: lat.toString(),
+              pickUpLng: lng.toString()
+            })
+          }}
+          label="Pickup Location"
+          height="350px"
+        />
+        <div className="form-row">
+          <input
+            type="text"
+            name="shiftID"
+            placeholder="Shift ID (Optional)"
+            value={formData.shiftID}
             onChange={handleInputChange}
             className="form-input"
           />
@@ -200,9 +248,13 @@ const ParentManagement = () => {
               <th>Parent ID</th>
               <th>Student Name</th>
               <th>Parent Name</th>
-              <th>Mobile Number</th>
+              <th>Mobile 1</th>
+              <th>Mobile 2</th>
               <th>School</th>
               <th>Vehicle Number</th>
+              <th>Pickup Lat</th>
+              <th>Pickup Lng</th>
+              <th>Shift ID</th>
               <th>Action</th>
             </tr>
           </thead>
@@ -238,12 +290,24 @@ const ParentManagement = () => {
                   {editingId === parent.id ? (
                     <input
                       type="text"
-                      value={editData.mobileNumber || ''}
-                      onChange={(e) => handleEditChange('mobileNumber', e.target.value)}
+                      value={editData.parentMobile1 || editData.mobileNumber || ''}
+                      onChange={(e) => handleEditChange('parentMobile1', e.target.value)}
                       className="inline-edit-input"
                     />
                   ) : (
-                    parent.mobileNumber
+                    parent.parentMobile1 || parent.mobileNumber || ''
+                  )}
+                </td>
+                <td>
+                  {editingId === parent.id ? (
+                    <input
+                      type="text"
+                      value={editData.parentMobile2 || editData.mobileNumber2 || ''}
+                      onChange={(e) => handleEditChange('parentMobile2', e.target.value)}
+                      className="inline-edit-input"
+                    />
+                  ) : (
+                    parent.parentMobile2 || ''
                   )}
                 </td>
                 <td>
@@ -276,6 +340,47 @@ const ParentManagement = () => {
                     </select>
                   ) : (
                     parent.vehicleNumber
+                  )}
+                </td>
+                <td>
+                  {editingId === parent.id ? (
+                    <input
+                      type="number"
+                      step="any"
+                      value={editData.pickUpLat?.toString() || ''}
+                      onChange={(e) => handleEditChange('pickUpLat', e.target.value)}
+                      className="inline-edit-input"
+                      style={{ width: '100px' }}
+                    />
+                  ) : (
+                    parent.pickUpLat || '-'
+                  )}
+                </td>
+                <td>
+                  {editingId === parent.id ? (
+                    <input
+                      type="number"
+                      step="any"
+                      value={editData.pickUpLng?.toString() || ''}
+                      onChange={(e) => handleEditChange('pickUpLng', e.target.value)}
+                      className="inline-edit-input"
+                      style={{ width: '100px' }}
+                    />
+                  ) : (
+                    parent.pickUpLng || '-'
+                  )}
+                </td>
+                <td>
+                  {editingId === parent.id ? (
+                    <input
+                      type="text"
+                      value={editData.shiftID || ''}
+                      onChange={(e) => handleEditChange('shiftID', e.target.value)}
+                      className="inline-edit-input"
+                      style={{ width: '80px' }}
+                    />
+                  ) : (
+                    parent.shiftID || '-'
                   )}
                 </td>
                 <td>

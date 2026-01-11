@@ -9,7 +9,12 @@ const VehicleManagement = () => {
     schoolName: '',
     ownerName: '',
     driverName: '',
-    driverMobile: ''
+    driverMobile: '',
+    driverId: '',
+    vendorId: '',
+    licensePhotoPath: '',
+    rcPhotoPath: '',
+    aadharPhotoPath: ''
   })
 
   const [editingId, setEditingId] = useState(null)
@@ -32,14 +37,24 @@ const VehicleManagement = () => {
           ownerName: formData.ownerName,
           schoolName: formData.schoolName,
           driverName: formData.driverName,
-          driverMobile: formData.driverMobile
+          driverMobile: formData.driverMobile,
+          driverId: formData.driverId,
+          vendorId: formData.vendorId,
+          licensePhotoPath: formData.licensePhotoPath,
+          rcPhotoPath: formData.rcPhotoPath,
+          aadharPhotoPath: formData.aadharPhotoPath
         })
         setFormData({
           vehicleNumber: '',
           schoolName: '',
           ownerName: '',
           driverName: '',
-          driverMobile: ''
+          driverMobile: '',
+          driverId: '',
+          vendorId: '',
+          licensePhotoPath: '',
+          rcPhotoPath: '',
+          aadharPhotoPath: ''
         })
       } catch (err) {
         alert('Error adding vehicle: ' + err.message)
@@ -60,10 +75,15 @@ const VehicleManagement = () => {
         setSaving(true)
         await updateVehicle(editingId, {
           vehicleNumber: editData.vehicleNumber,
-          ownerName: editData.owner,
+          ownerName: editData.ownerName || editData.owner,
           schoolName: editData.schoolName,
           driverName: editData.driverName,
-          driverMobile: editData.driverMobile
+          driverMobile: editData.driverMobile,
+          driverId: editData.driverId || '',
+          vendorId: editData.vendorId || '',
+          licensePhotoPath: editData.licensePhotoPath || editData.LicensePhotoPath || '',
+          rcPhotoPath: editData.rcPhotoPath || editData.RCPhotoPath || '',
+          aadharPhotoPath: editData.aadharPhotoPath || editData.aadharPhotoPath || ''
         })
         setEditingId(null)
         setEditData({})
@@ -172,6 +192,52 @@ const VehicleManagement = () => {
             onChange={handleInputChange}
             className="form-input"
           />
+          <input
+            type="text"
+            name="driverId"
+            placeholder="Driver ID (Optional)"
+            value={formData.driverId}
+            onChange={handleInputChange}
+            className="form-input"
+          />
+        </div>
+        <div className="form-row">
+          <input
+            type="text"
+            name="vendorId"
+            placeholder="Vendor ID (Optional)"
+            value={formData.vendorId}
+            onChange={handleInputChange}
+            className="form-input"
+          />
+        </div>
+        <div className="form-row">
+          <input
+            type="text"
+            name="licensePhotoPath"
+            placeholder="License Photo Path (Optional)"
+            value={formData.licensePhotoPath}
+            onChange={handleInputChange}
+            className="form-input"
+          />
+          <input
+            type="text"
+            name="rcPhotoPath"
+            placeholder="RC Photo Path (Optional)"
+            value={formData.rcPhotoPath}
+            onChange={handleInputChange}
+            className="form-input"
+          />
+        </div>
+        <div className="form-row">
+          <input
+            type="text"
+            name="aadharPhotoPath"
+            placeholder="Aadhar Photo Path (Optional)"
+            value={formData.aadharPhotoPath}
+            onChange={handleInputChange}
+            className="form-input"
+          />
         </div>
         <div className="form-actions">
           <button onClick={handleAdd} className="btn btn-primary" disabled={saving}>
@@ -189,7 +255,9 @@ const VehicleManagement = () => {
               <th>Owner</th>
               <th>School Name</th>
               <th>Driver Name</th>
-              <th>Driver Mobile Number</th>
+              <th>Driver Mobile</th>
+              <th>Driver ID</th>
+              <th>Vendor ID</th>
               <th>Action</th>
             </tr>
           </thead>
@@ -257,7 +325,33 @@ const VehicleManagement = () => {
                       className="inline-edit-input"
                     />
                   ) : (
-                    vehicle.driverMobile
+                    vehicle.driverMobile || '-'
+                  )}
+                </td>
+                <td>
+                  {editingId === vehicle.id ? (
+                    <input
+                      type="text"
+                      value={editData.driverId || ''}
+                      onChange={(e) => handleEditChange('driverId', e.target.value)}
+                      className="inline-edit-input"
+                      style={{ width: '100px' }}
+                    />
+                  ) : (
+                    vehicle.driverId || '-'
+                  )}
+                </td>
+                <td>
+                  {editingId === vehicle.id ? (
+                    <input
+                      type="text"
+                      value={editData.vendorId || ''}
+                      onChange={(e) => handleEditChange('vendorId', e.target.value)}
+                      className="inline-edit-input"
+                      style={{ width: '120px' }}
+                    />
+                  ) : (
+                    vehicle.vendorId || '-'
                   )}
                 </td>
                 <td>

@@ -88,9 +88,9 @@ export const AppProvider = ({ children }) => {
   }, [])
 
   // School operations
-  const handleAddSchool = async (name, address) => {
+  const handleAddSchool = async (schoolData) => {
     try {
-      await addSchoolToFirebase(name, address)
+      await addSchoolToFirebase(schoolData)
       // Real-time listener will update the state
     } catch (err) {
       console.error('Error adding school:', err)

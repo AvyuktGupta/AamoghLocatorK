@@ -48,13 +48,19 @@ export const getSchools = async () => {
  * @param {string} address - School address
  * @returns {Promise<string>} Document ID
  */
-export const addSchool = async (name, address) => {
+export const addSchool = async (schoolData) => {
   try {
     const schoolsRef = collection(db, COLLECTIONS.SCHOOLS)
     const docRef = await addDoc(schoolsRef, {
-      name: name.trim(),
-      address: address.trim() || 'Address not provided',
-      createdAt: serverTimestamp()
+      name: schoolData.name.trim(),
+      address: schoolData.address?.trim() || '',
+      lat: schoolData.lat || null,
+      lng: schoolData.lng || null,
+      isActive: schoolData.isActive !== undefined ? schoolData.isActive : true,
+      createdBy: '',
+      updatedBy: '',
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
     })
     return docRef.id
   } catch (error) {
@@ -75,6 +81,11 @@ export const updateSchool = async (schoolId, updatedData) => {
     const updateFields = {}
     if (updatedData.name !== undefined) updateFields.name = updatedData.name.trim()
     if (updatedData.address !== undefined) updateFields.address = updatedData.address.trim()
+    if (updatedData.lat !== undefined) updateFields.lat = updatedData.lat
+    if (updatedData.lng !== undefined) updateFields.lng = updatedData.lng
+    if (updatedData.isActive !== undefined) updateFields.isActive = updatedData.isActive
+    updateFields.updatedAt = serverTimestamp()
+    updateFields.updatedBy = ''
     
     await updateDoc(schoolRef, updateFields)
   } catch (error) {
@@ -174,9 +185,13 @@ export const getVehiclesWithSchoolNames = async () => {
         return {
           ...vehicle,
           schoolName: school?.name || '',
-          // Map driverId to driverName if needed (for now using driverMobile)
           driverName: vehicle.driverName || '',
-          driverMobile: vehicle.driverMobile || ''
+          driverMobile: vehicle.driverMobile || '',
+          driverId: vehicle.driverId || '',
+          vendorId: vehicle.vendorId || '',
+          licensePhotoPath: vehicle.LicensePhotoPath || '',
+          rcPhotoPath: vehicle.RCPhotoPath || '',
+          aadharPhotoPath: vehicle.aadharPhotoPath || ''
         }
       })
     )
@@ -222,7 +237,11 @@ export const addVehicle = async (vehicleData) => {
       ownerName: vehicleData.ownerName?.trim() || '',
       driverName: vehicleData.driverName?.trim() || '',
       driverMobile: vehicleData.driverMobile?.trim() || '',
-      driverId: vehicleData.driverId || '',
+      driverId: vehicleData.driverId?.trim() || '',
+      vendorId: vehicleData.vendorId?.trim() || '',
+      LicensePhotoPath: vehicleData.licensePhotoPath?.trim() || '',
+      RCPhotoPath: vehicleData.rcPhotoPath?.trim() || '',
+      aadharPhotoPath: vehicleData.aadharPhotoPath?.trim() || '',
       createdAt: serverTimestamp()
     })
     return docRef.id
@@ -252,7 +271,7 @@ export const updateVehicle = async (vehicleId, updatedData) => {
     }
     
     // Handle other fields
-    const allowedFields = ['vehicleNumber', 'ownerName', 'driverName', 'driverMobile', 'driverId']
+    const allowedFields = ['vehicleNumber', 'ownerName', 'driverName', 'driverMobile', 'driverId', 'vendorId']
     allowedFields.forEach(field => {
       if (updatedData[field] !== undefined) {
         updateFields[field] = typeof updatedData[field] === 'string' 
@@ -260,6 +279,17 @@ export const updateVehicle = async (vehicleId, updatedData) => {
           : updatedData[field]
       }
     })
+    
+    // Handle photo paths (with proper field names)
+    if (updatedData.licensePhotoPath !== undefined) {
+      updateFields.LicensePhotoPath = updatedData.licensePhotoPath.trim()
+    }
+    if (updatedData.rcPhotoPath !== undefined) {
+      updateFields.RCPhotoPath = updatedData.rcPhotoPath.trim()
+    }
+    if (updatedData.aadharPhotoPath !== undefined) {
+      updateFields.aadharPhotoPath = updatedData.aadharPhotoPath.trim()
+    }
     
     await updateDoc(vehicleRef, updateFields)
   } catch (error) {
@@ -306,7 +336,12 @@ export const subscribeToVehicles = (callback) => {
           ...vehicle,
           schoolName: school?.name || '',
           driverName: vehicle.driverName || '',
-          driverMobile: vehicle.driverMobile || ''
+          driverMobile: vehicle.driverMobile || '',
+          driverId: vehicle.driverId || '',
+          vendorId: vehicle.vendorId || '',
+          licensePhotoPath: vehicle.LicensePhotoPath || '',
+          rcPhotoPath: vehicle.RCPhotoPath || '',
+          aadharPhotoPath: vehicle.aadharPhotoPath || ''
         }
       })
     )
@@ -359,7 +394,12 @@ export const getStudentsWithDetails = async () => {
         school: school?.name || '',
         vehicleNumber: vehicle?.vehicleNumber || '',
         mobileNumber: student.parentMobile1 || '',
-        parentName: student.parentName || ''
+        parentName: student.parentName || '',
+        parentMobile1: student.parentMobile1 || '',
+        parentMobile2: student.parentMobile2 || '',
+        pickUpLat: student.pickUpLat,
+        pickUpLng: student.pickUpLng,
+        shiftID: student.shiftID || ''
       }
     })
   } catch (error) {
@@ -398,11 +438,17 @@ export const addStudent = async (studentData) => {
     const docRef = await addDoc(studentsRef, {
       name: studentData.name.trim(),
       parentName: studentData.parentName?.trim() || '',
-      parentMobile1: studentData.mobileNumber.trim(),
-      parentMobile2: '',
+      parentMobile1: studentData.parentMobile1 || studentData.mobileNumber?.trim() || '',
+      parentMobile2: studentData.parentMobile2?.trim() || '',
+      pickUpLat: studentData.pickUpLat || null,
+      pickUpLng: studentData.pickUpLng || null,
       schoolId: schoolId || '',
+      shiftID: studentData.shiftID?.trim() || '',
       vehicleId: vehicleId || '',
-      createdAt: serverTimestamp()
+      createdBy: '',
+      updatedBy: '',
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
     })
     return docRef.id
   } catch (error) {
@@ -445,9 +491,23 @@ export const updateStudent = async (studentId, updatedData) => {
     if (updatedData.parentName !== undefined) {
       updateFields.parentName = updatedData.parentName.trim()
     }
-    if (updatedData.mobileNumber !== undefined) {
-      updateFields.parentMobile1 = updatedData.mobileNumber.trim()
+    if (updatedData.parentMobile1 !== undefined || updatedData.mobileNumber !== undefined) {
+      updateFields.parentMobile1 = (updatedData.parentMobile1 || updatedData.mobileNumber || '').trim()
     }
+    if (updatedData.parentMobile2 !== undefined) {
+      updateFields.parentMobile2 = updatedData.parentMobile2.trim()
+    }
+    if (updatedData.pickUpLat !== undefined) {
+      updateFields.pickUpLat = updatedData.pickUpLat
+    }
+    if (updatedData.pickUpLng !== undefined) {
+      updateFields.pickUpLng = updatedData.pickUpLng
+    }
+    if (updatedData.shiftID !== undefined) {
+      updateFields.shiftID = updatedData.shiftID.trim()
+    }
+    updateFields.updatedAt = serverTimestamp()
+    updateFields.updatedBy = ''
     
     await updateDoc(studentRef, updateFields)
   } catch (error) {

@@ -1,23 +1,39 @@
 import React, { useState } from 'react'
 import { useAppContext } from '../context/AppContext'
+import LocationPicker from '../components/LocationPicker'
 import './PageStyles.css'
 
 const SchoolManagement = () => {
   const { schools, addSchool, updateSchool, deleteSchool, loading, error } = useAppContext()
   const [schoolName, setSchoolName] = useState('')
   const [schoolAddress, setSchoolAddress] = useState('')
+  const [schoolLat, setSchoolLat] = useState('')
+  const [schoolLng, setSchoolLng] = useState('')
+  const [isActive, setIsActive] = useState(true)
   const [editingId, setEditingId] = useState(null)
   const [editName, setEditName] = useState('')
   const [editAddress, setEditAddress] = useState('')
+  const [editLat, setEditLat] = useState('')
+  const [editLng, setEditLng] = useState('')
+  const [editIsActive, setEditIsActive] = useState(true)
   const [saving, setSaving] = useState(false)
 
   const handleAdd = async () => {
     if (schoolName.trim() && !saving) {
       try {
         setSaving(true)
-        await addSchool(schoolName, schoolAddress)
+        await addSchool({
+          name: schoolName,
+          address: schoolAddress,
+          lat: schoolLat ? parseFloat(schoolLat) : null,
+          lng: schoolLng ? parseFloat(schoolLng) : null,
+          isActive: isActive
+        })
         setSchoolName('')
         setSchoolAddress('')
+        setSchoolLat('')
+        setSchoolLng('')
+        setIsActive(true)
       } catch (err) {
         alert('Error adding school: ' + err.message)
       } finally {
@@ -28,8 +44,11 @@ const SchoolManagement = () => {
 
   const handleModify = (school) => {
     setEditingId(school.id)
-    setEditName(school.name)
-    setEditAddress(school.address)
+    setEditName(school.name || '')
+    setEditAddress(school.address || '')
+    setEditLat(school.lat?.toString() || '')
+    setEditLng(school.lng?.toString() || '')
+    setEditIsActive(school.isActive !== undefined ? school.isActive : true)
   }
 
   const handleSaveEdit = async () => {
@@ -38,11 +57,17 @@ const SchoolManagement = () => {
         setSaving(true)
         await updateSchool(editingId, {
           name: editName,
-          address: editAddress
+          address: editAddress,
+          lat: editLat ? parseFloat(editLat) : null,
+          lng: editLng ? parseFloat(editLng) : null,
+          isActive: editIsActive
         })
         setEditingId(null)
         setEditName('')
         setEditAddress('')
+        setEditLat('')
+        setEditLng('')
+        setEditIsActive(true)
       } catch (err) {
         alert('Error updating school: ' + err.message)
       } finally {
@@ -55,6 +80,9 @@ const SchoolManagement = () => {
     setEditingId(null)
     setEditName('')
     setEditAddress('')
+    setEditLat('')
+    setEditLng('')
+    setEditIsActive(true)
   }
 
   const handleDelete = async () => {
@@ -114,6 +142,26 @@ const SchoolManagement = () => {
             className="form-input"
           />
         </div>
+        <LocationPicker
+          initialLat={schoolLat || null}
+          initialLng={schoolLng || null}
+          onLocationChange={(lat, lng) => {
+            setSchoolLat(lat.toString())
+            setSchoolLng(lng.toString())
+          }}
+          label="School Location"
+          height="350px"
+        />
+        <div className="form-row">
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <input
+              type="checkbox"
+              checked={isActive}
+              onChange={(e) => setIsActive(e.target.checked)}
+            />
+            Active
+          </label>
+        </div>
         <div className="form-actions">
           <button onClick={handleAdd} className="btn btn-primary" disabled={saving}>
             {saving ? 'Adding...' : 'Add'}
@@ -128,6 +176,9 @@ const SchoolManagement = () => {
               <th>School ID</th>
               <th>Name</th>
               <th>Address</th>
+              <th>Latitude</th>
+              <th>Longitude</th>
+              <th>Active</th>
               <th>Action</th>
             </tr>
           </thead>
@@ -157,6 +208,45 @@ const SchoolManagement = () => {
                     />
                   ) : (
                     school.address
+                  )}
+                </td>
+                <td>
+                  {editingId === school.id ? (
+                    <input
+                      type="number"
+                      step="any"
+                      value={editLat}
+                      onChange={(e) => setEditLat(e.target.value)}
+                      className="inline-edit-input"
+                      style={{ width: '100px' }}
+                    />
+                  ) : (
+                    school.lat || '-'
+                  )}
+                </td>
+                <td>
+                  {editingId === school.id ? (
+                    <input
+                      type="number"
+                      step="any"
+                      value={editLng}
+                      onChange={(e) => setEditLng(e.target.value)}
+                      className="inline-edit-input"
+                      style={{ width: '100px' }}
+                    />
+                  ) : (
+                    school.lng || '-'
+                  )}
+                </td>
+                <td>
+                  {editingId === school.id ? (
+                    <input
+                      type="checkbox"
+                      checked={editIsActive}
+                      onChange={(e) => setEditIsActive(e.target.checked)}
+                    />
+                  ) : (
+                    school.isActive ? 'Yes' : 'No'
                   )}
                 </td>
                 <td>
